@@ -1,39 +1,48 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QMenu, QAction
+from PyQt5.QtWidgets import QApplication, QListWidget, QMenu, QListWidgetItem
 from PyQt5.QtCore import Qt
 
-
-class VentanaPrincipal(QMainWindow):
-
+class MiVentana(QListWidget):
     def __init__(self):
         super().__init__()
-        self.inicializar_gui()
+        self.initUI()
 
-    def inicializar_gui(self):
-        self.setWindowTitle("Ejemplo de menú de opciones")
-        self.setGeometry(100, 100, 300, 200)
+    def initUI(self):
+        # Agregar elementos al QListWidget
+        self.addItem("Elemento 1")
+        self.addItem("Elemento 2")
+        self.addItem("Elemento 3")
 
-        boton = QPushButton("Haz clic derecho en mí", self)
-        boton.setGeometry(50, 50, 200, 50)
-        boton.setContextMenuPolicy(Qt.CustomContextMenu)
-        boton.customContextMenuRequested.connect(self.mostrar_menu)
+        # Conectar el evento customContextMenuRequested a la función showContextMenu
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showContextMenu)
 
-        self.show()
+    def showContextMenu(self, pos):
+        # Obtener el elemento seleccionado
+        item = self.itemAt(pos)
 
-    def mostrar_menu(self, punto):
-        menu = QMenu()
-        cerrar_action = QAction("Cerrar", self)
-        guardar_action = QAction("Guardar", self)
-        menu.addAction(cerrar_action)
-        menu.addAction(guardar_action)
-        posicion_global = self.sender().mapToGlobal(punto)
-        seleccion = menu.exec_(posicion_global)
+        # Si no hay elementos seleccionados, salir
+        if item is None:
+            return
 
-        if seleccion == cerrar_action:
-            self.close()
-        elif seleccion == guardar_action:
-            print("Guardando...")
+        # Crear una instancia de QMenu para nuestro menú contextual
+        menu = QMenu(self)
+
+        # Añadir acciones al menú contextual
+        menu.addAction("Editar")
+        menu.addAction("Eliminar")
+
+        # Mostrar el menú contextual en la posición del cursor
+        action = menu.exec_(self.mapToGlobal(pos))
+
+        # Ejecutar la acción correspondiente al hacer clic en el menú contextual
+        if action is not None:
+            if action.text() == "Editar":
+                self.editItem(item)
+            elif action.text() == "Eliminar":
+                self.takeItem(self.row(item))
 
 if __name__ == '__main__':
     app = QApplication([])
-    ventana = VentanaPrincipal()
+    ventana = MiVentana()
+    ventana.show()
     app.exec_()

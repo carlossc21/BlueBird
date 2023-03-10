@@ -122,7 +122,7 @@ class Ui_MainWindow(object):
         font.setWeight(75)
         self.bibliotecaBtn.setFont(font)
         self.bibliotecaBtn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.bibliotecaBtn.setObjectName("bibliotecaBtn")
+        self.bibliotecaBtn.setObjectName("mostListenedBtn")
         self.horizontalLayout.addWidget(self.bibliotecaBtn)
         self.favoritasBtn = QtWidgets.QPushButton(self.menu)
         self.favoritasBtn.setMinimumSize(QtCore.QSize(0, 60))

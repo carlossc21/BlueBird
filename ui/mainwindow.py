@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 
 # Form implementation generated from reading ui file 'bluebird.ui'
 #
@@ -13,7 +14,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, Qt
 from functools import partial
 
 from PyQt5.QtMultimedia import QMediaPlayer
-from PyQt5.QtWidgets import QListWidgetItem
+from PyQt5.QtWidgets import QListWidgetItem, QMenu, QAction
 
 from player.Player import Player
 from ui.NameChooserDialog import NameChooserDialog
@@ -35,13 +36,31 @@ class ClickableWidget(QtWidgets.QWidget):
     def getUserData(self):
         return self.data
 
+    def enterEvent(self, event):
+        # Acción a realizar cuando el mouse entra en las coordenadas del widget
+        self.setStyleSheet('background-color:black;')
+
+        for widget in self.findChildren(QtWidgets.QWidget):
+            widget.setStyleSheet('background-color:black;')
+
+    def leaveEvent(self, event):
+        # Acción a realizar cuando el mouse entra en las coordenadas del widget
+        self.setStyleSheet('background-color:none;')
+
+        for widget in self.findChildren(QtWidgets.QWidget):
+            widget.setStyleSheet('background-color:none;')
+
 
 class Ui_MainWindow(object):
 
-    def select_list(self):
-        self.bibliotecaBtn.setText('hola')
+    def select_list(self, list_name):
+        content = self.player.get_playlist_content(list_name)
+        self.songsList.clear()
 
-    def new_list(self):
+        for data in content:
+            self.add_song_to_frame(data.split('||')[1] + ' (' + data.split('||')[2] + ')', data)
+
+    def new_list(self, add=None):
         nombres_ocupados = self.player.get_playlists()
         name = NameChooserDialog().exec_()
         if (len(name.strip()) == 0 or name.isspace()):
@@ -50,17 +69,19 @@ class Ui_MainWindow(object):
         valido = False
         cont = 0
         aux = name
-        while(not valido):
+        while (not valido):
             if aux in nombres_ocupados:
-                cont = cont+1
+                cont = cont + 1
                 aux = name + '(' + str(cont) + ')'
             else:
-                valido=True
+                valido = True
         name = aux
 
         self.player.guardar_playlist(name)
+        if add is not  False:
+            print(add)
+            self.player.añadir_cancion(name, add)
         self.add_list(name)
-
 
     def add_list(self, name):
 
@@ -73,6 +94,7 @@ class Ui_MainWindow(object):
         hLayout = QtWidgets.QHBoxLayout(Item)
         hLayout.setContentsMargins(0, 0, 0, 0)
         hLayout.setObjectName("horizontalLayout_2")
+        hLayout.setSpacing(0)
         Icon = QtWidgets.QPushButton(Item)
         Icon.setMinimumSize(QtCore.QSize(40, 40))
         Icon.setMaximumSize(QtCore.QSize(40, 40))
@@ -88,7 +110,7 @@ class Ui_MainWindow(object):
         font.setPointSize(10)
         NameLabel.setFont(font)
         NameLabel.setObjectName("listNameLabel")
-        NameLabel.setStyleSheet('background-color:rgba(0, 0, 0, 0);')
+        NameLabel.setStyleSheet('background-color:none;')
         NameLabel.setText(name)
         hLayout.addWidget(NameLabel)
         startPlayList = QtWidgets.QPushButton(Item)
@@ -103,9 +125,12 @@ class Ui_MainWindow(object):
         startPlayList.setObjectName("startPlayList")
         startPlayList.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         startPlayList.clicked.connect(partial(self.player.reproducir_playlist, name))
+        startPlayList.clicked.connect(partial(self.select_list, name))
         hLayout.addWidget(startPlayList)
         self.verticalLayout_3.addWidget(Item)
-        Item.clicked.connect(self.select_list)
+        Item.clicked.connect(partial(self.select_list, name))
+        Item.setContextMenuPolicy(Qt.CustomContextMenu)
+        Item.customContextMenuRequested.connect(partial(self.show_playlist_context_menu, Item, name))
         Item.setUserData(self.player.get_playlist_content(name))
 
     def setupUi(self, MainWindow):
@@ -214,17 +239,18 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setContentsMargins(30, 0, 30, 0)
         self.horizontalLayout.setSpacing(10)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.bibliotecaBtn = QtWidgets.QPushButton(self.menu)
-        self.bibliotecaBtn.setMinimumSize(QtCore.QSize(0, 60))
+        self.mostListenedBtn = QtWidgets.QPushButton(self.menu)
+        self.mostListenedBtn.setMinimumSize(QtCore.QSize(0, 60))
         font = QtGui.QFont()
         font.setFamily("Microsoft New Tai Lue")
         font.setPointSize(12)
         font.setBold(True)
         font.setWeight(75)
-        self.bibliotecaBtn.setFont(font)
-        self.bibliotecaBtn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
-        self.bibliotecaBtn.setObjectName("bibliotecaBtn")
-        self.horizontalLayout.addWidget(self.bibliotecaBtn)
+        self.mostListenedBtn.setFont(font)
+        self.mostListenedBtn.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
+        self.mostListenedBtn.setObjectName("mostListenedBtn")
+        self.mostListenedBtn.clicked.connect(self.most_listened_action)
+        self.horizontalLayout.addWidget(self.mostListenedBtn)
         self.favoritasBtn = QtWidgets.QPushButton(self.menu)
         self.favoritasBtn.setMinimumSize(QtCore.QSize(0, 60))
         font = QtGui.QFont()
@@ -349,6 +375,9 @@ class Ui_MainWindow(object):
                                      "border:none;")
         self.songsList.setObjectName("songsList")
         self.songsList.itemClicked.connect(self.song_selected)
+        self.songsList.activated.connect(self.song_selected)
+        self.songsList.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.songsList.customContextMenuRequested.connect(self.show_song_context_menu)
         self.gridLayout_3.addWidget(self.songsList, 0, 0, 1, 1)
         self.horizontalLayout_5.addWidget(self.songsFrame)
         self.horizontalLayout_5.setStretch(0, 1)
@@ -431,17 +460,18 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-
         for element in self.player.get_playlists():
             self.add_list(element)
 
         for cancion in self.player.obtener_canciones():
-            self.add_song_to_frame(cancion['title_short']+' ('+cancion['artist']['name']+')', cancion['preview'])
+            self.add_song_to_frame(cancion['title_short'] + ' (' + cancion['artist']['name'] + ')',
+                                   cancion['preview'] + '||' + cancion['title_short'] + '||' + cancion['artist'][
+                                       'name'])
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "BlueBird"))
-        self.bibliotecaBtn.setText(_translate("MainWindow", "Mas Escuchadas"))
+        self.mostListenedBtn.setText(_translate("MainWindow", "Mas Escuchadas"))
         self.favoritasBtn.setText(_translate("MainWindow", "Canciones Favoritas"))
         self.searchText.setPlaceholderText(_translate("MainWindow", "Buscar..."))
         self.listsLabel.setText(_translate("MainWindow", "Listas de Reproducción"))
@@ -449,42 +479,136 @@ class Ui_MainWindow(object):
     def add_song_to_frame(self, name, data=None):
         item = QListWidgetItem(name)
         item.setData(Qt.UserRole, data)
+
         self.songsList.addItem(item)
+
+    def show_song_context_menu(self, pos):
+        # Obtener el elemento seleccionado
+        item = self.songsList.itemAt(pos)
+        # Si no hay elementos seleccionados, salir
+        if item is None:
+            return
+
+        # Crear una instancia de QMenu para nuestro menú contextual
+        menu = QMenu(self.songsList)
+
+        menu.setStyleSheet('QMenu {'
+                           'border: 1px solid #d4d4d4;'
+                           'padding: 4px;'
+                           '}'
+                           'QMenu::item {'
+                           'padding: 2px 20px 2px 20px;'
+                           'background-color: transparent;'
+                           '}'
+                           'QMenu::item:selected {'
+                           'background-color: #0078d7;'
+                           'color: #ffffff;'
+                           '}'
+                           'QMenu::separator {'
+                           'height: 1px;'
+                           'background-color: #d4d4d4;'
+                           'margin: 4px 0px 4px 0px;'
+                           '}'
+                           )
+
+        # Añadir acciones al menú contextual
+        descargar = QAction('Descargar', menu)
+        descargar.triggered.connect(partial(self.player.descargar_cancion, item.data(Qt.UserRole), item.text()))
+        menu.addAction(descargar)
+        submenu = QMenu("Añadir a Lista de reproduccion", menu)
+        for element in self.player.get_playlists():
+            pl = QAction(element, submenu)
+            pl.triggered.connect(partial(self.player.añadir_cancion, element, item.data(Qt.UserRole)))
+            submenu.addAction(pl)
+
+        submenu.addSeparator()
+        new = QAction('Nueva Lista +', submenu)
+
+
+        new.triggered.connect(partial(self.new_list, item.data(Qt.UserRole)))
+        submenu.addAction(new)
+        menu.addMenu(submenu)
+        # Mostrar el menú contextual en la posición del cursor
+        action = menu.exec_(self.songsList.mapToGlobal(pos))
+
+        # Ejecutar la acción correspondiente al hacer clic en el menú contextual
+        if action is not None:
+            if action.text() == "Eliminar":
+                self.songsList.takeItem(self.songsList.row(item))
+
+    def show_playlist_context_menu(self, object, name,  pos):
+
+        # Crear una instancia de QMenu para nuestro menú contextual
+        menu = QMenu()
+
+        menu.setStyleSheet('QMenu {'
+                           'border: 1px solid #d4d4d4;'
+                           'padding: 4px;'
+                           'background-color:#2F2C2C;'
+                           '}'
+                           'QMenu::item {'
+                           'padding: 2px 20px 2px 20px;'
+                           'background-color: transparent;'
+                           'color:white;'
+                           '}'
+                           'QMenu::item:selected {'
+                           'background-color: #0078d7;'
+                           'color: #ffffff;'
+                           '}'
+                           'QMenu::separator {'
+                           'height: 1px;'
+                           'background-color: #d4d4d4;'
+                           'margin: 4px 0px 4px 0px;'
+                           '}'
+                           )
+
+        # Añadir acciones al menú contextual
+        eliminar = QAction('Eliminar playlist', menu)
+        eliminar.triggered.connect(partial(self.player.borrar_playlist, name))
+        eliminar.triggered.connect(object.hide)
+        eliminar.triggered.connect(self.songsList.clear)
+        menu.addAction(eliminar)
+
+
+        # Mostrar el menú contextual en la posición del cursor
+        menu.exec_(object.mapToGlobal(pos))
+
+
 
     def song_selected(self):
         item = self.songsList.currentItem()
-        url = item.data(Qt.UserRole)
+        url = item.data(Qt.UserRole).split('||')[0]
         print(url)
         self.player.reproducir_cancion(url=url)
+
+    def most_listened_action(self):
+        self.songsList.clear()
+        for cancion in self.player.obtener_canciones():
+            self.add_song_to_frame(cancion['title_short'] + ' (' + cancion['artist']['name'] + ')',
+                                   cancion['preview'] + '||' + cancion['title_short'] + '||' + cancion['artist'][
+                                       'name'])
 
     def search_songs(self):
         self.songsList.clear()
         for cancion in self.player.obtener_canciones_por_nombre(self.searchText.text()):
-            self.add_song_to_frame(cancion['title_short']+' ('+cancion['artist']['name']+')', cancion['preview'])
+            self.add_song_to_frame(cancion['title_short'] + ' (' + cancion['artist']['name'] + ')',
+                                   cancion['preview'] + '||' + cancion['title_short'] + '||' + cancion['artist'][
+                                       'name'])
 
     def set_song_duration_by_slider_position(self, posicion):
-        # Desconectar la señal `sliderMoved` antes de establecer el valor del QSlider
 
         # Convertir la posición del control deslizante a milisegundos
-        nueva_posicion = round(posicion  * self.player.reproductor.duration() / 100)
+        nueva_posicion = round(posicion * self.player.reproductor.duration() / 100)
 
         # Actualizar la posición del reproductor
         if (self.player.reproductor.duration() != 0):
             self.player.reproductor.setPosition(nueva_posicion)
 
-        # Volver a conectar la señal `sliderMoved` después de establecer el valor del QSlider
-
     def update_slider(self, position):
-        print(position)
         # Obtener la duración del archivo multimedia
         duracion = self.player.reproductor.duration()
-        if((position != 0) and (duracion !=0)):
+        if ((position != 0) and (duracion != 0)):
             self.horizontalSlider.setValue(round(position * 100 / duracion))
-
-        # Actualizar el valor del control deslizante y la etiqueta de posición
-        #self.horizontalSlider.blockSignals(True)
-        #self.horizontalSlider.setValue(position * 100 / duracion)
-        #self.horizontalSlider.blockSignals(False)
 
     def handle_play_pause(self):
         if self.player.reproductor.state() == QMediaPlayer.State.PlayingState:

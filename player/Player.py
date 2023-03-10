@@ -3,7 +3,7 @@ import sys
 
 import requests
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QListWidget, \
-    QListWidgetItem
+    QListWidgetItem, QFileDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -20,13 +20,15 @@ class Player:
             print("La canción ha terminado de reproducirse.")
             if (len(self.playlist) > 0):
                 if (len(self.playlist) > self.contador):
-                    response = requests.get(self.playlist[self.contador])
+                    response = requests.get(self.playlist[self.contador].split('||')[0])
 
                     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
                         f.write(response.content)
                         temp_file = f.name
                         print(f"Archivo descargado y guardado en: {temp_file}")
                         self.reproductor.setMedia(QMediaContent(QUrl.fromLocalFile(temp_file)))
+                        self.current_title = self.playlist[self.contador].split('||')[1]
+                        self.current_artist = self.playlist[self.contador].split('||')[2]
                         self.reproductor.play()
                         self.contador = self.contador + 1
 
@@ -37,6 +39,8 @@ class Player:
         self.playlist = []
         self.contador = 0
         self.api = api()
+        self.current_title = ''
+        self.current_artist = ''
 
         """# Configuración de ventana
         self.setWindowTitle("Reproductor de música")
@@ -80,6 +84,7 @@ class Player:
         # Configuración de reproductor
         self.reproductor = QMediaPlayer()
         self.reproductor.mediaStatusChanged.connect(self.handle_media_status)
+
         # self.reproducir_playlist('prueba')
 
     def get_playlist_content(self, playlist):
@@ -97,15 +102,16 @@ class Player:
         return self.api.obtener_canciones()
 
     def obtener_canciones_por_nombre(self, nombre_cancion):
-       return self.api.obtener_canciones_por_nombre(nombre_cancion)
+        return self.api.obtener_canciones_por_nombre(nombre_cancion)
 
     def reproducir_cancion(self, url=None):
-
+        # Eliminar la playlist actual para que no se siga reproduciendo al terminar la cancion seleccionada
+        self.playlist = []
         # Obtener canción seleccionada
-        #item = self.list_canciones.currentItem()
-        #if(url==None):
-            #url = item.data(Qt.UserRole)
-        #self.añadir_cancion('prueba', url)
+        # item = self.list_canciones.currentItem()
+        # if(url==None):
+        # url = item.data(Qt.UserRole)
+        # self.añadir_cancion('prueba', url)
 
         # Cargar canción en reproductor y reproducir
         response = requests.get(url)
@@ -124,14 +130,19 @@ class Player:
             self.playlist = lineas
             self.contador = 0
         archivo.close()
-        if(len(self.playlist)>0):
-            response = requests.get(self.playlist[self.contador])
+        if (len(self.playlist) > 0):
+            response = requests.get(self.playlist[self.contador].split('||')[0])
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
                 f.write(response.content)
                 temp_file = f.name
                 self.reproductor.setMedia(QMediaContent(QUrl.fromLocalFile(temp_file)))
+                self.current_title = self.playlist[self.contador].split('||')[1]
+                self.current_artist = self.playlist[self.contador].split('||')[2]
                 self.reproductor.play()
                 self.contador = self.contador + 1
+
+    def borrar_playlist(self, nombre):
+        os.remove('../ui/playlists/' + nombre)
 
     def pausar_cancion(self):
         self.reproductor.pause()
@@ -148,11 +159,25 @@ class Player:
             archivo.flush()
         archivo.close()
 
-    def añadir_cancion(self, playlist, url_cancion):
+    def añadir_cancion(self, playlist, datos):
         with open('../ui/playlists/' + playlist, 'a') as archivo:
-            archivo.write(url_cancion + '\n')
+            archivo.write(datos + '\n')
             archivo.flush()
         archivo.close()
+
+    def descargar_cancion(self, url, nombre):
+        response = requests.get(url)
+        ruta_directorio = QFileDialog.getExistingDirectory(None, 'Selecciona un directorio')
+
+        with open(ruta_directorio+'/'+nombre+'.mp3', 'wb') as f:
+            print('hola')
+            f.write(response.content)
+
+            f.flush()
+
+        f.close()
+
+
 
 
 if __name__ == "__main__":
