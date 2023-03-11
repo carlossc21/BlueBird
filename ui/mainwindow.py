@@ -41,6 +41,7 @@ class ClickableWidget(QtWidgets.QWidget):
 
 class Ui_MainWindow(object):
 
+    # Se actualiza el frame de las canciones dependiendo de la lista seleccionada
     def select_list(self, list_name):
         content = self.player.get_playlist_content(list_name)
         self.songsList.clear()
@@ -51,12 +52,14 @@ class Ui_MainWindow(object):
         self.showing_favourites = False
         self.playlist_name = list_name
 
+    # Se crea una nueva lista
     def new_list(self, add=None):
         nombres_ocupados = self.player.get_playlists()
         name = NameChooserDialog().exec_()
         if (len(name.strip()) == 0 or name.isspace()):
             name = 'Nueva Lista'
 
+        # Controlamos que no existan nombres de playlists duplicados para evitar errores
         valido = False
         cont = 0
         aux = name
@@ -70,10 +73,10 @@ class Ui_MainWindow(object):
 
         self.player.guardar_playlist(name)
         if add is not  False:
-            print(add)
             self.player.añadir_cancion(name, add)
         self.add_list(name)
 
+    # Se añade un objeto al frame de las listas de reproducción
     def add_list(self, name):
 
         Item = ClickableWidget(self.listsContainer)
@@ -124,6 +127,8 @@ class Ui_MainWindow(object):
         Item.customContextMenuRequested.connect(partial(self.show_playlist_context_menu, Item, name))
         Item.setUserData(self.player.get_playlist_content(name))
 
+
+    # Se define la apariencia de la ventana y se conectan las señales a sus slots correspondientes
     def setupUi(self, MainWindow):
         self.player = Player()
         MainWindow.setObjectName("MainWindow")
@@ -586,7 +591,6 @@ class Ui_MainWindow(object):
     def song_selected(self):
         item = self.songsList.currentItem()
         url = item.data(Qt.UserRole).split('||')[0]
-        print(url)
         self.player.current_title = item.data(Qt.UserRole).split('||')[1]
         self.player.current_artist = item.data(Qt.UserRole).split('||')[2]
         self.player.reproducir_cancion(url=url)
@@ -642,13 +646,3 @@ class Ui_MainWindow(object):
         else:
             self.player.reproductor.play()
 
-
-if __name__ == "__main__":
-    import sys
-
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
