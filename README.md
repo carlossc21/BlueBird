@@ -1,5 +1,5 @@
 # BlueBird
-##Un reproductor de musica simple hecho con python
+## Un reproductor de musica simple hecho con python
 
 BlueBird es un reproductor de música simple que utiliza la API de Deezer para obtener y 
 reproducir música. Para reproducir una canción, simplemente haz clic izquierdo sobre ella. Si 
