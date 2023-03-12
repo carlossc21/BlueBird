@@ -1,10 +1,10 @@
 import os
+import tempfile
 
 import requests
-from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtCore import QUrl
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-import tempfile
+from PyQt5.QtWidgets import QFileDialog
 
 from player.api import api
 

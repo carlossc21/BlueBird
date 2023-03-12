@@ -94,7 +94,7 @@ class Ui_MainWindow(object):
         Icon.setMaximumSize(QtCore.QSize(40, 40))
         Icon.setText("")
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap("C:/Users/carlo/Downloads/lista-de-verificacion.png"), QtGui.QIcon.Normal,
+        icon2.addPixmap(QtGui.QPixmap("icons/lista-de-verificacion.png"), QtGui.QIcon.Normal,
                         QtGui.QIcon.Off)
         Icon.setIcon(icon2)
         Icon.setObjectName("listIcon")
@@ -113,7 +113,7 @@ class Ui_MainWindow(object):
         startPlayList.setText("")
 
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap("C:/Users/carlo/Downloads/boton-de-play.png"), QtGui.QIcon.Normal,
+        icon3.addPixmap(QtGui.QPixmap("icons/boton-de-play.png"), QtGui.QIcon.Normal,
                         QtGui.QIcon.Off)
         startPlayList.setIcon(icon3)
         startPlayList.setObjectName("startPlayList")
@@ -136,7 +136,7 @@ class Ui_MainWindow(object):
         MainWindow.setMinimumSize(QtCore.QSize(1000, 700))
         MainWindow.setMaximumSize(QtCore.QSize(16777215, 16777215))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("C:/Users/carlo/Downloads/logo.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("icons/logo.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         MainWindow.setStyleSheet("QMainWindow{\n"
                                  "\n"
@@ -319,7 +319,7 @@ class Ui_MainWindow(object):
         self.addList.setText("")
         self.addList.clicked.connect(self.new_list)
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("C:/Users/carlo/Downloads/anadir-lista (1).png"), QtGui.QIcon.Normal,
+        icon1.addPixmap(QtGui.QPixmap("icons/anadir-lista (1).png"), QtGui.QIcon.Normal,
                         QtGui.QIcon.Off)
         self.addList.setIcon(icon1)
         self.addList.setObjectName("addList")
@@ -429,7 +429,7 @@ class Ui_MainWindow(object):
                                       "}")
         self.pause_play.setText("")
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap("C:/Users/carlo/Downloads/tocar.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap("icons/tocar.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pause_play.setIcon(icon2)
         self.pause_play.setIconSize(QtCore.QSize(40, 40))
         self.pause_play.setObjectName("pause_play")
